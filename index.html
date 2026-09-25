@@ -325,8 +325,6 @@
   .opt.locked{cursor:default;}
   .opt.correct{border-color:var(--good);background:var(--good-soft);}
   .opt.correct .mark{background:var(--good);border-color:var(--good);color:#fff;}
-  .opt.incorrect{border-color:var(--bad);background:var(--bad-soft);}
-  .opt.incorrect .mark{background:var(--bad);border-color:var(--bad);color:#fff;}
 
   .match-row{
     display:grid;
@@ -350,7 +348,6 @@
     font-family:inherit;
   }
   .match-row.correct select{border-color:var(--good);}
-  .match-row.incorrect select{border-color:var(--bad);}
   .match-row select:disabled{opacity:.85;}
 
   .feedback{
@@ -363,7 +360,7 @@
   }
   .feedback.show{display:block;}
   .feedback.ok{background:var(--good-soft);border:1px solid var(--good);color:var(--ink);}
-  .feedback.no{background:var(--bad-soft);border:1px solid var(--bad);color:var(--ink);}
+  .feedback.info{background:var(--accent-soft);border:1px solid var(--accent);color:var(--ink);}
   .feedback .fb-head{
     font-weight:700;
     display:flex;
@@ -372,7 +369,7 @@
     margin-bottom:5px;
   }
   .feedback.ok .fb-head{color:var(--good);}
-  .feedback.no .fb-head{color:var(--bad);}
+  .feedback.info .fb-head{color:var(--accent);}
 
   /* ---------- Results ---------- */
   .score-hero{
@@ -655,7 +652,7 @@
       type:"tf", cat:"correspondencia",
       prompt:"La trazabilidad documental permite conocer quién recibió, gestionó y consultó un documento a lo largo de su ciclo.",
       correct:true,
-      explain:"Correcto. La trazabilidad responde preguntas como quién lo recibió, a qué dependencia se envió, qué trámite tuvo y quién lo consultó, siguiendo el ciclo: Recepción → Registro → Trámite → Archivo → Consulta → Disposición."
+      explain:"La afirmación es verdadera: la trazabilidad responde preguntas como quién lo recibió, a qué dependencia se envió, qué trámite tuvo y quién lo consultó, siguiendo el ciclo: Recepción → Registro → Trámite → Archivo → Consulta → Disposición."
     },
     {
       type:"single", cat:"barras",
@@ -723,7 +720,7 @@
       type:"tf", cat:"barras",
       prompt:"El código de barras EAN-13 es la opción más recomendada para identificar documentos internos de una empresa.",
       correct:false,
-      explain:"Falso. EAN-13 fue diseñado para identificación comercial de productos (13 dígitos, uso internacional en comercios). Para documentos internos se usan más bien códigos alfanuméricos como Code 39, Code 128 o identificadores propios del sistema documental."
+      explain:"La afirmación es falsa: EAN-13 fue diseñado para identificación comercial de productos (13 dígitos, uso internacional en comercios). Para documentos internos se usan más bien códigos alfanuméricos como Code 39, Code 128 o identificadores propios del sistema documental."
     },
     {
       type:"single", cat:"foliacion",
@@ -792,7 +789,7 @@
       type:"tf", cat:"gestion",
       prompt:"La transferencia primaria traslada los documentos del archivo central al archivo histórico.",
       correct:false,
-      explain:"Falso. La transferencia primaria va del archivo de gestión al archivo central, cuando se cumple el tiempo establecido en la TRD. La que va del archivo central al histórico es la transferencia secundaria."
+      explain:"La afirmación es falsa: la transferencia primaria va del archivo de gestión al archivo central, cuando se cumple el tiempo establecido en la TRD. La que va del archivo central al histórico es la transferencia secundaria."
     },
     {
       type:"single", cat:"gestion",
@@ -870,7 +867,7 @@
       type:"tf", cat:"qr",
       prompt:"Un código QR que contiene información sensible no necesita ningún control de autenticación, porque solo se puede leer con un celular.",
       correct:false,
-      explain:"Falso. Si el QR contiene o dirige a información sensible, debe existir autenticación y control de permisos. Cualquier persona con un celular puede escanear un QR físico, así que la seguridad depende del sistema al que dirige, no del código en sí."
+      explain:"La afirmación es falsa: si el QR contiene o dirige a información sensible, debe existir autenticación y control de permisos. Cualquier persona con un celular puede escanear un QR físico, así que la seguridad depende del sistema al que dirige, no del código en sí."
     },
     {
       type:"single", cat:"gestion",
@@ -1162,14 +1159,7 @@
 
   function onCheck(){
     var q = QUESTIONS[state.idx];
-    if(!isAnswered(q, state.idx)){
-      elFeedback.className = 'feedback no show';
-      elFbHead.innerHTML = '⚠ Falta responder';
-      elFbBody.textContent = 'Selecciona una respuesta antes de comprobar.';
-      return;
-    }
-
-    var correct = evaluateAnswer(q, state.idx);
+    var correct = isAnswered(q, state.idx) ? evaluateAnswer(q, state.idx) : false;
     state.checked[state.idx] = true;
     state.correctFlags[state.idx] = correct;
 
@@ -1207,28 +1197,25 @@
         sel.disabled = true;
         var row = sel.closest('.match-row');
         var val = sel.value === '' ? null : parseInt(sel.value,10);
-        row.classList.add(val === i ? 'correct' : 'incorrect');
+        if(val === i) row.classList.add('correct');
       });
     } else {
       var opts = elOptions.querySelectorAll('.opt');
-      var a = state.answers[state.idx];
       var correctSet = q.type === 'multi' ? q.correct :
                         q.type === 'tf' ? [q.correct ? 0 : 1] :
                         [q.correct];
       opts.forEach(function(el, i){
         el.classList.add('locked');
-        var chosen = q.type === 'multi' ? (a.indexOf(i) !== -1) : (a === i);
         var isCorrect = correctSet.indexOf(i) !== -1;
         if(isCorrect) el.classList.add('correct');
-        else if(chosen && !isCorrect) el.classList.add('incorrect');
       });
     }
   }
 
   function showFeedback(q){
     var correct = state.correctFlags[state.idx];
-    elFeedback.className = 'feedback show ' + (correct ? 'ok' : 'no');
-    elFbHead.innerHTML = correct ? '✓ Respuesta correcta' : '✕ Respuesta incorrecta';
+    elFeedback.className = 'feedback show ' + (correct ? 'ok' : 'info');
+    elFbHead.innerHTML = correct ? '✓ ¡Correcto!' : '📘 Explicación';
     elFbBody.textContent = q.explain;
   }
 
