@@ -322,9 +322,6 @@
   .options.multi .mark{border-radius:6px;}
   .opt.selected{border-color:var(--accent);background:var(--accent-soft);}
   .opt.selected .mark{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);}
-  .opt.locked{cursor:default;}
-  .opt.correct{border-color:var(--good);background:var(--good-soft);}
-  .opt.correct .mark{background:var(--good);border-color:var(--good);color:#fff;}
 
   .match-row{
     display:grid;
@@ -347,29 +344,7 @@
     font-size:13.5px;
     font-family:inherit;
   }
-  .match-row.correct select{border-color:var(--good);}
   .match-row select:disabled{opacity:.85;}
-
-  .feedback{
-    margin-top:18px;
-    padding:14px 16px;
-    border-radius:12px;
-    font-size:14px;
-    line-height:1.55;
-    display:none;
-  }
-  .feedback.show{display:block;}
-  .feedback.ok{background:var(--good-soft);border:1px solid var(--good);color:var(--ink);}
-  .feedback.info{background:var(--accent-soft);border:1px solid var(--accent);color:var(--ink);}
-  .feedback .fb-head{
-    font-weight:700;
-    display:flex;
-    align-items:center;
-    gap:8px;
-    margin-bottom:5px;
-  }
-  .feedback.ok .fb-head{color:var(--good);}
-  .feedback.info .fb-head{color:var(--accent);}
 
   /* ---------- Results ---------- */
   .score-hero{
@@ -446,6 +421,79 @@
     margin-top:28px;
   }
 
+  /* ---------- Attempts ---------- */
+  .attempts-box{
+    margin-top:16px;
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .attempts-box .pill{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 12px;
+    border-radius:99px;
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+  }
+  .attempts-box .pill.blocked{background:var(--bad-soft);border-color:var(--bad);color:var(--bad);}
+  .attempts-box .pill.ok{color:var(--accent);}
+  .locked-notice{
+    margin-top:18px;
+    padding:16px;
+    border-radius:12px;
+    background:var(--bad-soft);
+    border:1px solid var(--bad);
+    font-size:14px;
+    line-height:1.55;
+  }
+
+  /* ---------- Screenshot callout ---------- */
+  .shot-callout{
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+    background:var(--accent-soft);
+    border:1px solid var(--accent);
+    border-radius:14px;
+    padding:16px 18px;
+    font-size:13.5px;
+    line-height:1.55;
+    margin-top:16px;
+  }
+  .shot-ic{font-size:22px;flex:none;line-height:1;}
+  .shot-callout strong{display:block;margin-bottom:3px;font-size:14.5px;}
+
+  /* ---------- Detail review list ---------- */
+  .detail-list{display:flex;flex-direction:column;gap:10px;margin-top:14px;}
+  .detail-item{
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:12px 14px;
+    background:var(--surface-2);
+  }
+  .detail-item.right{border-left:4px solid var(--good);}
+  .detail-item.wrong{border-left:4px solid var(--bad);}
+  .detail-head{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:12.5px;
+    font-weight:700;
+  }
+  .detail-head .folio-n{
+    font-family:'IBM Plex Mono',monospace;
+    color:var(--ink-soft);
+    font-weight:500;
+  }
+  .detail-item.right .detail-head{color:var(--good);}
+  .detail-item.wrong .detail-head{color:var(--bad);}
+  .detail-prompt{font-size:13.5px;font-weight:600;margin-top:6px;line-height:1.4;}
+  .detail-row{font-size:12.5px;color:var(--ink-soft);margin-top:6px;line-height:1.5;}
+  .detail-row b{color:var(--ink);font-weight:600;}
+
   @media (max-width:480px){
     .card{padding:20px 16px;border-radius:14px;}
     .stat-row{grid-template-columns:repeat(3,1fr);gap:8px;}
@@ -489,6 +537,8 @@
         <span class="topic-chip">Códigos QR</span>
         <span class="topic-chip">OCR y otras tecnologías</span>
       </div>
+
+      <div class="attempts-box" id="attempts-box"></div>
 
       <div class="btn-row">
         <button class="btn btn-primary" id="btn-start">Comenzar evaluación →</button>
@@ -561,17 +611,9 @@
         <div id="q-options" class="options"></div>
         <div id="q-match" hidden></div>
 
-        <div class="feedback" id="q-feedback">
-          <div class="fb-head" id="fb-head"></div>
-          <div id="fb-body"></div>
-        </div>
-
         <div class="btn-row split">
           <button class="btn btn-ghost" id="btn-prev">← Anterior</button>
-          <div style="display:flex;gap:10px;">
-            <button class="btn btn-primary" id="btn-check">Comprobar respuesta</button>
-            <button class="btn btn-primary" id="btn-next" hidden>Siguiente →</button>
-          </div>
+          <button class="btn btn-primary" id="btn-next">Siguiente →</button>
         </div>
       </div>
     </section>
@@ -609,12 +651,28 @@
           <tr><td>Grupo</td><td id="sum-grupo">—</td></tr>
           <tr><td>Fecha</td><td id="sum-fecha">—</td></tr>
           <tr><td>Radicado</td><td id="sum-rad">—</td></tr>
+          <tr><td>Intento</td><td id="sum-intento">—</td></tr>
         </table>
       </div>
 
-      <div class="btn-row">
+      <div class="shot-callout">
+        <span class="shot-ic">📸</span>
+        <div>
+          <strong>Sube la constancia de tu nota.</strong>
+          Antes de salir, toma una captura de pantalla de esta página (que se vean tu nombre, el radicado y el resultado) y súbela donde tu docente indique.
+        </div>
+      </div>
+
+      <div class="card" id="detail-card">
+        <h3 style="font-size:16px;">Respuestas correctas e incorrectas</h3>
+        <p style="color:var(--ink-soft);font-size:12.5px;margin-top:4px;">Revisión completa de las 23 preguntas.</p>
+        <div class="detail-list" id="detail-list"></div>
+      </div>
+
+      <div class="btn-row" id="restart-row">
         <button class="btn btn-ghost" id="btn-restart">↺ Repetir evaluación</button>
       </div>
+      <div class="attempts-box" id="attempts-box-result" style="margin-top:14px;"></div>
       <footer class="credits">Evaluación generada para el módulo de Gestión Documental · Técnico Laboral</footer>
     </section>
 
@@ -965,9 +1023,6 @@
   var elHint = document.getElementById('q-hint');
   var elOptions = document.getElementById('q-options');
   var elMatch = document.getElementById('q-match');
-  var elFeedback = document.getElementById('q-feedback');
-  var elFbHead = document.getElementById('fb-head');
-  var elFbBody = document.getElementById('fb-body');
   var elTypeTag = document.getElementById('q-type-tag');
   var elFolio = document.getElementById('q-folio');
   var elCounter = document.getElementById('q-counter');
@@ -975,14 +1030,14 @@
   var elRadNum = document.getElementById('rad-num');
 
   var btnPrev = document.getElementById('btn-prev');
-  var btnCheck = document.getElementById('btn-check');
   var btnNext = document.getElementById('btn-next');
 
   btnPrev.addEventListener('click', function(){
     if(state.idx > 0){ state.idx--; renderQuestion(); }
   });
-  btnCheck.addEventListener('click', onCheck);
   btnNext.addEventListener('click', function(){
+    var q = QUESTIONS[state.idx];
+    state.correctFlags[state.idx] = isAnswered(q, state.idx) ? evaluateAnswer(q, state.idx) : false;
     if(state.idx < TOTAL - 1){ state.idx++; renderQuestion(); }
     else { finishQuiz(); }
   });
@@ -1016,9 +1071,6 @@
       elHint.hidden = true;
     }
 
-    elFeedback.className = 'feedback';
-    elFbBody.textContent = '';
-
     btnPrev.style.visibility = state.idx === 0 ? 'hidden' : 'visible';
 
     if(q.type === 'match'){
@@ -1031,15 +1083,7 @@
       renderOptions(q);
     }
 
-    var alreadyChecked = state.checked[state.idx];
-    btnCheck.hidden = alreadyChecked;
-    btnNext.hidden = !alreadyChecked;
-    btnNext.textContent = (state.idx === TOTAL - 1) ? "Ver resultados →" : "Siguiente →";
-
-    if(alreadyChecked){
-      showFeedback(q);
-      lockInputs(q);
-    }
+    btnNext.textContent = (state.idx === TOTAL - 1) ? "Finalizar y ver resultados →" : "Siguiente →";
   }
 
   function renderOptions(q){
@@ -1157,19 +1201,6 @@
     return a !== null && a !== undefined;
   }
 
-  function onCheck(){
-    var q = QUESTIONS[state.idx];
-    var correct = isAnswered(q, state.idx) ? evaluateAnswer(q, state.idx) : false;
-    state.checked[state.idx] = true;
-    state.correctFlags[state.idx] = correct;
-
-    lockInputs(q);
-    showFeedback(q);
-
-    btnCheck.hidden = true;
-    btnNext.hidden = false;
-  }
-
   function evaluateAnswer(q, idx){
     var a = state.answers[idx];
     if(q.type === 'single' || q.type === 'case'){
@@ -1190,33 +1221,112 @@
     return false;
   }
 
-  function lockInputs(q){
-    if(q.type === 'match'){
-      var selects = elMatch.querySelectorAll('select');
-      selects.forEach(function(sel, i){
-        sel.disabled = true;
-        var row = sel.closest('.match-row');
-        var val = sel.value === '' ? null : parseInt(sel.value,10);
-        if(val === i) row.classList.add('correct');
-      });
-    } else {
-      var opts = elOptions.querySelectorAll('.opt');
-      var correctSet = q.type === 'multi' ? q.correct :
-                        q.type === 'tf' ? [q.correct ? 0 : 1] :
-                        [q.correct];
-      opts.forEach(function(el, i){
-        el.classList.add('locked');
-        var isCorrect = correctSet.indexOf(i) !== -1;
-        if(isCorrect) el.classList.add('correct');
-      });
+  function formatAnswer(q, ans){
+    if(q.type === 'single' || q.type === 'case'){
+      return (ans !== null && ans !== undefined) ? q.options[ans] : 'No respondida';
     }
+    if(q.type === 'tf'){
+      if(ans === 0) return 'Verdadero';
+      if(ans === 1) return 'Falso';
+      return 'No respondida';
+    }
+    if(q.type === 'multi'){
+      if(ans && ans.length){
+        return ans.slice().sort(function(a,b){return a-b;}).map(function(i){return q.options[i];}).join('; ');
+      }
+      return 'No respondida';
+    }
+    if(q.type === 'match'){
+      if(!ans || ans.every(function(v){return v===null || v===undefined;})) return 'No respondida';
+      return q.pairs.map(function(pair,i){
+        var chosen = (ans[i] !== null && ans[i] !== undefined) ? q.pairs[ans[i]].right : '—';
+        return pair.left + ': ' + chosen;
+      }).join(' · ');
+    }
+    return '';
   }
 
-  function showFeedback(q){
-    var correct = state.correctFlags[state.idx];
-    elFeedback.className = 'feedback show ' + (correct ? 'ok' : 'info');
-    elFbHead.innerHTML = correct ? '✓ ¡Correcto!' : '📘 Explicación';
-    elFbBody.textContent = q.explain;
+  function formatCorrectAnswer(q){
+    if(q.type === 'single' || q.type === 'case') return q.options[q.correct];
+    if(q.type === 'tf') return q.correct ? 'Verdadero' : 'Falso';
+    if(q.type === 'multi') return q.correct.slice().sort(function(a,b){return a-b;}).map(function(i){return q.options[i];}).join('; ');
+    if(q.type === 'match') return q.pairs.map(function(pair){ return pair.left + ': ' + pair.right; }).join(' · ');
+    return '';
+  }
+
+  function labelRow(label, value){
+    var div = document.createElement('div');
+    div.className = 'detail-row';
+    var b = document.createElement('b');
+    b.textContent = label + ' ';
+    div.appendChild(b);
+    div.appendChild(document.createTextNode(value));
+    return div;
+  }
+
+  function renderDetailList(){
+    var detailListEl = document.getElementById('detail-list');
+    detailListEl.innerHTML = '';
+    QUESTIONS.forEach(function(q, i){
+      var correct = state.correctFlags[i];
+      var item = document.createElement('div');
+      item.className = 'detail-item ' + (correct ? 'right' : 'wrong');
+
+      var head = document.createElement('div');
+      head.className = 'detail-head';
+      var folioSpan = document.createElement('span');
+      folioSpan.className = 'folio-n';
+      folioSpan.textContent = 'Folio ' + String(i+1).padStart(2,'0');
+      var statusSpan = document.createElement('span');
+      statusSpan.textContent = correct ? '✓ Correcta' : '✕ Incorrecta';
+      head.appendChild(folioSpan);
+      head.appendChild(statusSpan);
+
+      var prompt = document.createElement('div');
+      prompt.className = 'detail-prompt';
+      prompt.textContent = q.prompt;
+
+      item.appendChild(head);
+      item.appendChild(prompt);
+      item.appendChild(labelRow('Tu respuesta:', formatAnswer(q, state.answers[i])));
+
+      if(!correct){
+        item.appendChild(labelRow('Respuesta correcta:', formatCorrectAnswer(q)));
+        var explainRow = document.createElement('div');
+        explainRow.className = 'detail-row';
+        explainRow.textContent = q.explain;
+        item.appendChild(explainRow);
+      }
+
+      detailListEl.appendChild(item);
+    });
+  }
+
+  /* ===================== ATTEMPTS (máx. 2) ===================== */
+  var MAX_ATTEMPTS = 2;
+  var ATTEMPTS_KEY = 'egd_attempts_v1';
+
+  function getAttempts(){
+    try{ return parseInt(localStorage.getItem(ATTEMPTS_KEY) || '0', 10) || 0; }
+    catch(e){ return 0; }
+  }
+  function incrementAttempts(){
+    try{ localStorage.setItem(ATTEMPTS_KEY, String(getAttempts() + 1)); }
+    catch(e){ /* localStorage unavailable: fail open, don't block the student */ }
+  }
+  function renderAttemptsStatus(){
+    var used = getAttempts();
+    var remaining = Math.max(0, MAX_ATTEMPTS - used);
+    var html = remaining > 0
+      ? '<span class="pill ok">🎟 Intentos disponibles: ' + remaining + ' de ' + MAX_ATTEMPTS + '</span>'
+      : '<span class="pill blocked">🚫 Ya usaste tus ' + MAX_ATTEMPTS + ' intentos permitidos</span>';
+    ['attempts-box','attempts-box-result'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el) el.innerHTML = html;
+    });
+    var btnStartEl = document.getElementById('btn-start');
+    if(btnStartEl) btnStartEl.disabled = remaining <= 0;
+    return remaining;
   }
 
   /* ===================== RESULTS ===================== */
@@ -1271,6 +1381,21 @@
     document.getElementById('sum-fecha').textContent = formatFecha(state.student.fecha) || '—';
     document.getElementById('sum-rad').textContent = 'RAD-2026-' + String(TOTAL).padStart(3,'0') + '-' + (state.student.grupo || 'GEN');
 
+    renderDetailList();
+
+    var attemptNumber = getAttempts() + 1;
+    incrementAttempts();
+    document.getElementById('sum-intento').textContent = 'Intento ' + attemptNumber + ' de ' + MAX_ATTEMPTS;
+
+    var remaining = renderAttemptsStatus();
+    var restartRow = document.getElementById('restart-row');
+    if(remaining > 0){
+      restartRow.innerHTML = '<button class="btn btn-ghost" id="btn-restart">↺ Repetir evaluación</button>';
+      document.getElementById('btn-restart').addEventListener('click', onRestart);
+    } else {
+      restartRow.innerHTML = '<div class="locked-notice">Ya usaste tus 2 intentos permitidos para esta evaluación. Guarda la captura de pantalla de este resultado y compártela con tu docente.</div>';
+    }
+
     show(screenResult);
   }
 
@@ -1304,7 +1429,8 @@
     };
   }
 
-  document.getElementById('btn-restart').addEventListener('click', function(){
+  function onRestart(){
+    if(getAttempts() >= MAX_ATTEMPTS){ renderAttemptsStatus(); return; }
     state.idx = 0;
     state.answers = new Array(TOTAL).fill(null);
     state.checked = new Array(TOTAL).fill(false);
@@ -1314,8 +1440,15 @@
     document.getElementById('in-grupo').value = '';
     document.getElementById('in-fecha').value = '';
     document.getElementById('in-correo').value = '';
+    renderAttemptsStatus();
     show(screenStart);
-  });
+  }
+
+  document.getElementById('btn-start').addEventListener('click', function(){
+    if(getAttempts() >= MAX_ATTEMPTS){ renderAttemptsStatus(); return; }
+  }, {capture:true});
+
+  renderAttemptsStatus();
 
 })();
 </script>
